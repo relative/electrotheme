@@ -1,0 +1,16 @@
+{
+  "scripts": {
+    "build": "pnpm run build:dev",
+    "build:dev": "node scripts/build.cjs",
+    "build:prod": "node scripts/build.cjs --production",
+    "watch": "pnpm run watch:dev",
+    "watch:dev": "node scripts/build.cjs --watch",
+    "watch:prod": "node scripts/build.cjs --watch --production"
+  },
+  "devDependencies": {
+    "esbuild": "0.14.38"
+  },
+  "dependencies": {
+    "ws": "8.6.0"
+  }
+}
