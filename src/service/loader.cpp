@@ -7,8 +7,10 @@
 #include "../dependencies/easywsclient/easywsclient.hpp"
 #include <nlohmann/json.hpp>
 #include <curl/curl.h>
-
+#include "../config.hpp"
 #include "../js/bundle.hpp"
+#include "../log.hpp"
+#include "service.hpp"
 
 #define MAX_RETRIES 30
 
@@ -47,39 +49,49 @@ class Inspector {
       this->wsUrl = wsUrl;
       this->ws = std::unique_ptr<easywsclient::WebSocket>(easywsclient::WebSocket::from_url(wsUrl));
     }
-    void sendRaw(json payload) {
-      payload["id"] = messageId++;
+    int sendRaw(json payload) {
+      auto id = messageId++;
+      payload["id"] = id;
       ws->send(payload.dump());
+      return id;
     }
-    void send(std::string method) {
-      sendRaw({
+    int send(std::string method) {
+      return sendRaw({
         {"method", method}
       });
     }
-    void send(std::string method, json params) {
-      sendRaw({
+    int send(std::string method, json params) {
+      return sendRaw({
         {"method", method},
         {"params", params}
       });
     }
-    bool poll() {
+    bool poll(int timeout = 0) {
       if (ws->getReadyState() == easywsclient::WebSocket::CLOSED) return false;
       
       easywsclient::WebSocket::pointer wsp = &*ws;
-      ws->poll();
       ws->dispatch([this, wsp](const std::string& message) {
         try {
           auto p = json::parse(message);
+          LOGDEBUG("Message from v8 inspector: %s\n", p.dump().c_str());
+          if (p.contains("id")) {
+            lastReplyId = p["id"].get<int>();
+            lastReply = p;
+          }
           if (!p.contains("method")) return;
         } catch (const std::exception& ex) {
           fprintf(stderr, "Failed to handle message from v8 inspector: %s\n", ex.what());
         }
       });
+      ws->poll(timeout);
+
       return true;
     }
 
     std::unique_ptr<easywsclient::WebSocket> ws;
     int messageId = 0;
+    int lastReplyId = -1;
+    json lastReply;
   private:
     std::string wsUrl;
 };
@@ -88,7 +100,8 @@ std::string Loader::get_jsbundle(LoaderApplication& app) {
   json options = {
     {"executableName", app.executableName},
     {"pid", app.processId},
-    {"removeCSP", app.removeCSP}
+    {"removeCSP", app.removeCSP},
+    {"port", gService->server->port}
   };
   auto optionsStr = options.dump();
   auto pos = 0;
@@ -99,6 +112,11 @@ std::string Loader::get_jsbundle(LoaderApplication& app) {
   std::string preamble = "(globalThis || global).electrothemeOptions = JSON.parse(`" + optionsStr + "`);\n";
   std::string bundle(jsbundle, jsbundle + jsbundle_size);
   return preamble + bundle;
+}
+
+std::string Loader::get_scripts(LoaderApplication& app) {
+  auto app_ = gConfig->get_application_by_executable(app.executableName);
+  return gConfig->get_script_for_application(app_);
 }
 
 void Loader::start() {
@@ -153,16 +171,41 @@ void Loader::process_application(LoaderApplication& app) {
   // Enable the Runtime domain to evaluate JS
   inspector->send("Runtime.enable");
 
+  auto appScript = get_scripts(app);
+  bool sentScripts = appScript == "";
+  bool sentScripts_ = false;
   bool sentStyleInjector = false;
+  bool sentStyleInjector_ = false;
   int sentDebugEnd = 0;
-  while (inspector->poll()) {
-    if (!sentStyleInjector){
-      sentStyleInjector = true;
-      inspector->send("Runtime.evaluate", {
+
+  int scriptsId = -1;
+  int stylesId = -1;
+
+  while (inspector->poll(500)) {
+    LOGDEBUG("\npoll(), scriptsId = %i\nstylesId = %i\nlastReplyId = %i\n", scriptsId, stylesId, inspector->lastReplyId);
+    if (scriptsId > 0 && !sentScripts) {
+      if (inspector->lastReplyId >= scriptsId) sentScripts = true;
+      else continue;
+    } else if (stylesId > 0 && !sentStyleInjector) {
+      if (inspector->lastReplyId >= stylesId) sentStyleInjector = true;
+      else continue;
+    }
+    if (!sentScripts) {
+      // sentScripts = true;
+      LOGDEBUG("sending scripts\n");
+      scriptsId = inspector->send("Runtime.evaluate", {
+        {"expression", appScript},
+        {"includeCommandLineAPI", true} // so we can use CJS require to get electron.app
+      });
+    } else if (!sentStyleInjector){
+      // sentStyleInjector = true;
+      LOGDEBUG("sending styles\n");
+      stylesId = inspector->send("Runtime.evaluate", {
         {"expression", get_jsbundle(app)},
         {"includeCommandLineAPI", true} // so we can use CJS require to get electron.app
       });
     } else {
+      LOGDEBUG("sending debugEnd\n");
       inspector->send("Runtime.evaluate", {
         {"expression", "process._debugEnd();"},
         {"includeCommandLineAPI", true}

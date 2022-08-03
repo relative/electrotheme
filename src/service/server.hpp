@@ -25,10 +25,10 @@ class Server {
     void release();
 
     void update_style(std::string& exeName, std::string& styleContent);
+    int port = 64132;
   private:
     uWS::TemplatedApp<false>* app;
     std::vector<etws*> sockets;
-    int port = 64132;
 };
 
 #endif /* SERVICE_SERVER_HPP */

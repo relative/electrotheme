@@ -3,6 +3,7 @@
 #include <uwebsockets/App.h>
 #include <nlohmann/json.hpp>
 #include "../config.hpp"
+#include "../util.hpp"
 
 using json = nlohmann::json;
 
@@ -12,6 +13,11 @@ enum class MessageType {
 };
 
 void Server::start() {
+  srand(static_cast<unsigned int>(time(0)));
+  port = rand() % (65534-32768+1)+32768;
+  while (util::check_for_conflicting_ports(port)) {
+    port = rand() % (65534-32768+1)+32768;
+  }
   using uws = uWS::WebSocket<false, true, PerSocketData>;
   app = new uWS::App();
 
@@ -75,6 +81,8 @@ void Server::start() {
         return vs == ws;
       });
       if (it == sockets.end()) return;
+      auto psd = reinterpret_cast<PerSocketData*>(ws->getUserData());
+      LOGDEBUG("WS closed for %s (code = %i, reason = %s)\n", psd->executableName.c_str(), code, std::string(reason).c_str());
       sockets.erase(it);
     }
   }).listen(port, [](auto* listen_s) {
@@ -82,7 +90,7 @@ void Server::start() {
       LOGDEBUG("Websocket listening\n");
     }
   });
-
+  
   app->run();
 }
 

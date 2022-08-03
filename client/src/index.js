@@ -7,6 +7,7 @@ import { setStyleSheet, setupWebContents } from './styles'
 
 const executableName = (globalThis || global).electrothemeOptions.executableName
 const removeCSP = (globalThis || global).electrothemeOptions.removeCSP
+const port = (globalThis || global).electrothemeOptions.port
 
 const RETRY_TIME = 50
 
@@ -72,7 +73,7 @@ class EWS extends EventEmitter {
   }
 }
 
-const ws = new EWS('ws://127.0.0.1:64132/client')
+const ws = new EWS('ws://127.0.0.1:' + port.toString() + '/client')
 ws.on('open', () => {
   ws.send(MESSAGE_TYPES.Hello, {
     exe: executableName,

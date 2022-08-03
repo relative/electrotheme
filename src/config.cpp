@@ -17,6 +17,7 @@ void Config::set_config_directory(std::string& configDirectory) {
     config_directory = configDirectory;
   }
   styles_directory = config_directory / STYLES_DIRECTORY;
+  scripts_directory = config_directory / SCRIPTS_DIRECTORY;
   config_file = config_directory / CONFIG_FILE;
 
   if (!std::filesystem::exists(config_directory)) {
@@ -27,6 +28,11 @@ void Config::set_config_directory(std::string& configDirectory) {
   if (!std::filesystem::exists(styles_directory)) {
     LOGDEBUGW(L"Creating styles directory %s\n", styles_directory.c_str());
     std::filesystem::create_directory(styles_directory);
+  }
+
+  if (!std::filesystem::exists(scripts_directory)) {
+    LOGDEBUGW(L"Creating scripts directory %s\n", scripts_directory.c_str());
+    std::filesystem::create_directory(scripts_directory);
   }
 
   if (!std::filesystem::exists(config_file)) {
@@ -79,11 +85,30 @@ void Config::load_applications() {
       app.name = e["name"].get<std::string>();
       app.directory = e["directory"].get<std::string>();
 
+      if (app.directory != "") {
+        auto appStyleDir = styles_directory / app.directory;
+        auto appScriptDir = scripts_directory / app.directory;
+        if (!std::filesystem::exists(appStyleDir)) {
+          LOGDEBUGW(L"Creating application style directory %s\n", appStyleDir.c_str());
+          std::filesystem::create_directory(appStyleDir);
+        }
+        if (!std::filesystem::exists(appScriptDir)) {
+          LOGDEBUGW(L"Creating application script directory %s\n", appScriptDir.c_str());
+          std::filesystem::create_directory(appScriptDir);
+        }
+      }
+
       // css path
       if (e.contains("style") && e["style"].is_string()) {
         app.style = e["style"].get<std::string>();
       } else {
         app.style = "index.css";
+      }
+
+      if (e.contains("script") && e["script"].is_string()) {
+        app.script = e["script"].get<std::string>();
+      } else {
+        app.script = "index.js";
       }
 
       if (e.contains("removeCSP") && e["removeCSP"].is_boolean()) {
@@ -122,6 +147,17 @@ Application* Config::get_application_by_executable(const std::string& executable
 
 std::string Config::get_style_for_application(Application* app) {
   std::filesystem::path p = styles_directory / app->directory / app->style;
+  std::ifstream ifs(p);
+  std::stringstream buf;
+  
+  buf << ifs.rdbuf();
+  auto str = buf.str();
+
+  return str;
+}
+
+std::string Config::get_script_for_application(Application* app) {
+  std::filesystem::path p = scripts_directory / app->directory / app->script;
   std::ifstream ifs(p);
   std::stringstream buf;
   

@@ -40,6 +40,7 @@ class Loader {
     std::condition_variable c;
 
     std::string get_jsbundle(LoaderApplication& app);
+    std::string get_scripts(LoaderApplication& app);
 };
 
 #endif /* SERVICE_LOADER_HPP */

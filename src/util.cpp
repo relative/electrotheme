@@ -4,7 +4,7 @@
 #include <iphlpapi.h>
 #include <stdexcept>
 
-bool util::check_for_conflicting_ports() {
+bool util::check_for_conflicting_ports(int port_ = 0) {
   // For some odd reason GetOwnerModuleFromTcpEntry requires Advapi32.dll to be loaded
   // and it doesn't load it itself. Else it will return ERROR_MOD_NOT_FOUND (126L = 0x7e)
   LoadLibraryA("Advapi32.dll");
@@ -48,16 +48,24 @@ bool util::check_for_conflicting_ports() {
     }
 
     // LOGDEBUG("port %i - owned by process %s (pid: %i)\n", localPort, ownerModule.c_str(), entry.dwOwningPid);
-
-    switch (localPort) {
-      case 9229:
+    if (port_ == 0) { // check for conflicting ports
+      switch (localPort) {
+        case 9229:
+          fprintf(stderr,
+            "Found conflicting port %i - owned by process %s (pid: %i)\n",
+            localPort, ownerModule.c_str(), entry.dwOwningPid);
+          bConflicting = true;
+          break;
+        default:
+          break;
+      }
+    } else { // check for conflicting SERVER ports (port_ param)
+      if (localPort == port_) {
         fprintf(stderr,
           "Found conflicting port %i - owned by process %s (pid: %i)\n",
           localPort, ownerModule.c_str(), entry.dwOwningPid);
-        bConflicting = true;
-        break;
-      default:
-        break;
+        return true; // bConflicting = true;
+      }
     }
   }
 
