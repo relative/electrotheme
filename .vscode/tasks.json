@@ -10,7 +10,7 @@
       "options": {
         "cwd": "${workspaceFolder}"
       },
-      "problemMatcher": ["$msCompile"],
+      "problemMatcher": ["$msCompile", "$gcc"],
       "detail": "cmake",
       "group": {
         "kind": "build",

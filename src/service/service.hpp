@@ -11,24 +11,24 @@
 
 class Service {
  public:
-	std::thread loaderThread;
-	std::thread websocketThread;
-	Loader* loader;
-	Server* server;
-	void start();
+  std::thread loaderThread;
+  std::thread websocketThread;
+  Loader* loader;
+  Server* server;
+  void start();
 
  private:
-	IWbemLocator* pLoc = nullptr;
-	IWbemServices* pSvc = nullptr;
-	IUnsecuredApartment* pApp = nullptr;
-	EventSink* pSink = nullptr;
-	IUnknown* pStubUnk = nullptr;
-	IWbemObjectSink* pStubSink = nullptr;
+  IWbemLocator* pLoc = nullptr;
+  IWbemServices* pSvc = nullptr;
+  IUnsecuredApartment* pApp = nullptr;
+  EventSink* pSink = nullptr;
+  IUnknown* pStubUnk = nullptr;
+  IWbemObjectSink* pStubSink = nullptr;
 
-	void initialize_wmi();
-	void destroy_wmi();
+  void initialize_wmi();
+  void destroy_wmi();
 };
 
-extern Service* gService;
+extern std::unique_ptr<Service> gService;
 
 #endif /* SERVICE_SERVICE_HPP */

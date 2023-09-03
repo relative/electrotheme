@@ -4,16 +4,16 @@
 #include "cli.hpp"
 
 void load_command_startservice(CLI::App& app) {
-	auto startservice = app.add_subcommand("startservice", "Start service");
+  auto startservice = app.add_subcommand("startservice", "Start service");
 
-	startservice->callback([&]() {
-		gService = new Service();
+  startservice->callback([&]() {
+    gService = std::make_unique<Service>();
 
-		// Only start the file watcher if we are running as service
-		gWatcher = new Watcher(gConfig);
-		gWatcher->start();
+    // Only start the file watcher if we are running as service
+    gWatcher = std::make_unique<Watcher>();
+    gWatcher->start();
 
-		// locks main thread
-		gService->start();
-	});
+    // locks main thread
+    gService->start();
+  });
 }

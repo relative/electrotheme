@@ -32,41 +32,13 @@ find_package(curl CONFIG REQUIRED)
 find_package(ZLIB REQUIRED)
 find_package(libuv CONFIG REQUIRED)
 
+find_library(USOCKETS_LIB usockets)
 find_path(UWEBSOCKETS_INCLUDE_DIRS "uwebsockets/App.h")
 
-find_program(CMAKE_MC_COMPILER mc.exe windmc.exe HINTS "${sdk_bindir}" "${kit_bindir}" "${kit81_bindir}" ${kit10_bindir}
-     DOC "path to message compiler")
-MESSAGE(STATUS "CMAKE_MC_COMPILER:${CMAKE_MC_COMPILER}")
-
-add_executable(electrotheme
-  src/main.cpp
-  src/cli/cli.hpp
-  src/cli/appcmd.cpp
-  src/cli/editconfigcmd.cpp
-  src/cli/openfoldercmd.cpp
-  src/cli/startservicecmd.cpp
-
-  src/log.hpp
-  src/config.cpp src/config.hpp
-  src/util.cpp src/util.hpp
-  src/watcher.cpp src/watcher.hpp
-  src/js/bundle.hpp
-
-  src/dependencies/easywsclient/easywsclient.cpp src/dependencies/easywsclient/easywsclient.hpp
-
-  src/service/service.cpp src/service/service.hpp
-  src/service/loader.cpp src/service/loader.hpp
-  src/service/server.cpp src/service/server.hpp
-  src/service/eventsink.cpp src/service/eventsink.hpp
-  src/service/node.cpp src/service/node.hpp
-)
+file(GLOB_RECURSE SRC CONFIGURE_DEPENDS src/*.cpp src/*.hpp src/*.c src/*.h)
+add_executable(electrotheme ${SRC})
 
 embed_resource("client/dist/index.js" "src/js/bundle.hpp" "jsbundle")
-
-find_library(USOCKETS_LIB usockets)
-
-MESSAGE(STATUS "LIBUV_LIB:${LIBUV_LIB}")
-MESSAGE(STATUS "USOCKETS_LIB:${USOCKETS_LIB}")
 
 target_link_libraries(electrotheme PRIVATE
   nlohmann_json::nlohmann_json
@@ -77,7 +49,12 @@ target_link_libraries(electrotheme PRIVATE
   $<IF:$<TARGET_EXISTS:uv_a>,uv_a,uv> ${USOCKETS_LIB}
   Shlwapi.lib wbemuuid.lib iphlpapi.lib Kernel32.lib Psapi.lib Userenv.lib)
 target_include_directories(electrotheme PRIVATE ${UWEBSOCKETS_INCLUDE_DIRS})
-
-set_property(TARGET electrotheme PROPERTY 
+target_compile_definitions(electrotheme PRIVATE
+  WIN32_LEAN_AND_MEAN
+  VC_EXTRALEAN
+)
+set_target_properties(electrotheme PROPERTIES 
   CXX_STANDARD 23
-  MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
+  MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:DEBUG>:Debug>"
+  RUNTIME_OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/out"
+)
