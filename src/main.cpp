@@ -8,7 +8,7 @@
 #include "watcher.hpp"
 
 int main(int argc, char** argv) {
-  CLI::App app{"Simple Electron stylesheet loader", "electrotheme"};
+  CLI::App app{"Simple Electron script & stylesheet loader", "electrotheme"};
   auto opt = new MainOptions();
   app.add_option("--config,-c",
                  [](std::vector<std::string> dir) {

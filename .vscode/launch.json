@@ -13,7 +13,7 @@
       "stopAtEntry": false,
       "cwd": "${workspaceFolder}/build/out",
       "environment": [],
-      "console": "internalConsole",
+      "console": "integratedTerminal",
       "preLaunchTask": "CMake: build"
     }
   ]

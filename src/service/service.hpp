@@ -11,10 +11,8 @@
 
 class Service {
  public:
-  std::thread loaderThread;
-  std::thread websocketThread;
-  Loader* loader;
-  Server* server;
+  std::unique_ptr<Loader> loader;
+  std::unique_ptr<Server> server;
   void start();
 
  private:

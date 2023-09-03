@@ -106,12 +106,10 @@ void Service::start() {
   }
 
   __print(stdout, "Starting WebSocket server");
-  server = new Server();
-  websocketThread = std::thread(&Server::start, server);
+  server = std::make_unique<Server>();
 
   __print(stdout, "Starting loader thread");
-  loader = new Loader();
-  loaderThread = std::thread(&Loader::start, loader);
+  loader = std::make_unique<Loader>();
 
   __print(stdout, "Initializing process watcher");
   try {
@@ -122,7 +120,7 @@ void Service::start() {
     exit(1);
   }
 
-  websocketThread.join();
+  server->thread.join();
 
   destroy_wmi();
 }

@@ -11,14 +11,18 @@ struct PerSocketData {};
 
 class Server {
  public:
-  void start();
+  Server() { thread = std::thread(&Server::loop, this); }
+  ~Server();
   void release();
 
   void update_style(std::string& exeName, std::string& styleContent);
   int port = 64132;
 
+  std::thread thread;
+
  private:
   std::unique_ptr<uWS::App> app;
+  void loop();
 };
 
 #endif /* SERVICE_SERVER_HPP */

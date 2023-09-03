@@ -25,9 +25,8 @@ struct std::formatter<loader_application_t> : std::formatter<std::string_view> {
 
 class Loader {
  public:
-  Loader() : q(), m(), c() {}
+  Loader() : q(), m(), c() { thread = std::thread(&Loader::loop, this); }
 
-  void start();
   void process_application(LoaderApplication& app);
 
   inline void enqueue(LoaderApplication app) {
@@ -47,12 +46,15 @@ class Loader {
   }
 
  private:
+  std::thread thread;
   std::queue<LoaderApplication> q;
   mutable std::mutex m;
   std::condition_variable c;
 
   std::string get_jsbundle(LoaderApplication& app);
   std::string get_scripts(LoaderApplication& app);
+
+  void loop();
 };
 
 #endif /* SERVICE_LOADER_HPP */

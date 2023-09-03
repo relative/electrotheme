@@ -4,10 +4,14 @@
   "version": "0.0.0",
 
   "dependencies": [
+    {
+      "name": "curl",
+      "features": ["websockets"],
+      "default-features": false
+    },
     "cli11",
     "nlohmann-json",
     "efsw",
-    "curl",
     "zlib",
     "libuv",
     "uwebsockets"

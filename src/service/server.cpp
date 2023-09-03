@@ -12,7 +12,7 @@ using json = nlohmann::json;
 
 enum class MessageType { HELLO = 0, STYLES_UPDATE = 1 };
 
-void Server::start() {
+void Server::loop() {
 #ifndef _DEBUG
   srand(static_cast<unsigned int>(time(0)));
   port = rand() % (65534 - 32768 + 1) + 32768;
@@ -95,7 +95,7 @@ void Server::start() {
   app->run();
 }
 
-void Server::release() { uWS::Loop::get()->free(); }
+Server::~Server() { uWS::Loop::get()->free(); }
 
 void Server::update_style(std::string& exeName, std::string& styleContent) {
   DbgLog("Updating style for {} - styles {} length", exeName,

@@ -44,10 +44,6 @@ void Watcher::handleFileAction(efsw::WatchID watchId, const std::string& dir,
     if (bStyles) {
       auto app = gConfig->get_application_by_directory(styleDir);
 
-      // Ensure we are running in service
-      // The watcher should not be created unless launched as a service
-      if (gService == nullptr) return;
-
       auto style = app.get_style();
       gService->server->update_style(app.name, style);
     }
