@@ -69,12 +69,9 @@ void Config::load_file(bool silent) {
     if (config == nullptr) return;
     load_applications();
   } catch (const std::exception& ex) {
-    if (!silent) {
-      __print(stderr,
-              "Failed to read config from disk\n{}\ncfg = {}\n\nExiting.",
-              ex.what());
-      exit(1);
-    }
+    __print(stderr, "Failed to read config from disk\n{}\ncfg = {}\n\nExiting.",
+            ex.what());
+    if (!silent) exit(1);
   }
 }
 
