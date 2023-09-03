@@ -45,7 +45,7 @@ class Config {
   std::set<std::string> watchedExecutables;
   std::vector<Application> applications;
 
-  void load_file();
+  void load_file(bool silent = false);
   void save_file();
   void set_config_directory(std::string& configDirectory);
   Application& get_application_by_directory(const std::string& directory);

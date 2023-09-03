@@ -36,7 +36,7 @@ void Watcher::handleFileAction(efsw::WatchID watchId, const std::string& dir,
   if (filename.compare(CONFIG_FILE) == 0 && !bStyles) {
     if (action != efsw::Actions::Modified) return;
     DbgLog("Config file {} modified, reloading configuration", filename);
-    gConfig->load_file();
+    gConfig->load_file(true);
     return;
   }
 

@@ -57,7 +57,7 @@ void Config::set_config_directory(std::string& configDirectory) {
   DbgLog("Config directory: {}", config_directory);
 }
 
-void Config::load_file() {
+void Config::load_file(bool silent) {
   DbgLog("Loading config from file {}", config_file);
   try {
     std::ifstream ifs(config_file);
@@ -65,14 +65,17 @@ void Config::load_file() {
     buf << ifs.rdbuf();
     config = json::parse(buf);
     ifs.close();
-  } catch (const std::exception& ex) {
-    __print(stderr, "Failed to read config from disk\n{}\n\nExiting.",
-            ex.what());
-    exit(1);
-  }
-  if (config == nullptr) return;
 
-  load_applications();
+    if (config == nullptr) return;
+    load_applications();
+  } catch (const std::exception& ex) {
+    if (!silent) {
+      __print(stderr,
+              "Failed to read config from disk\n{}\ncfg = {}\n\nExiting.",
+              ex.what());
+      exit(1);
+    }
+  }
 }
 
 void Config::save_file() {
