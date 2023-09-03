@@ -4,7 +4,7 @@
 #include <CLI/CLI.hpp>
 
 struct MainOptions {
-  std::string configDirectory;
+	std::string configDirectory;
 };
 
 void load_command_app(CLI::App& app);

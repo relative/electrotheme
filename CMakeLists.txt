@@ -23,33 +23,15 @@ function(embed_resource resource_file_name source_file_name variable_name)
   file(WRITE "${source_file_name}" "${source}")
 endfunction()
 
-# vcpkg (only Windows)
-message(STATUS "CMAKE_BUILD_TYPE is ${CMAKE_BUILD_TYPE}")
-if(CMAKE_BUILD_TYPE MATCHES Debug)
-  set(VCPKG_TARGET_TRIPLET "x64-windows-static" CACHE STRING "VCPKG_TARGET_TRIPLET" FORCE)
-  message(STATUS "Target triplet for debug is " ${VCPKG_TARGET_TRIPLET})
-else()
-  set(VCPKG_TARGET_TRIPLET "x64-windows-static" CACHE STRING "VCPKG_TARGET_TRIPLET" FORCE)
-  message(STATUS "Target triplet for release is " ${VCPKG_TARGET_TRIPLET})
-endif()
-
-
-if(DEFINED ENV{VCPKG_ROOT})
-  set(CMAKE_TOOLCHAIN_FILE "$ENV{VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake" CACHE STRING "" FORCE)
-else()
-  message(STATUS "Vcpkg wasn't found, please follow instructions from `vcpkg integrate install` or define VCPKG_ROOT "
-                 "in your environment")
-endif()
-
 project (electrotheme)
-
-set(CMAKE_CXX_STANDARD 20)
 
 find_package(CLI11 CONFIG REQUIRED)
 find_package(nlohmann_json CONFIG REQUIRED)
 find_package(efsw CONFIG REQUIRED)
 find_package(curl CONFIG REQUIRED)
 find_package(ZLIB REQUIRED)
+find_package(libuv CONFIG REQUIRED)
+
 find_path(UWEBSOCKETS_INCLUDE_DIRS "uwebsockets/App.h")
 
 find_program(CMAKE_MC_COMPILER mc.exe windmc.exe HINTS "${sdk_bindir}" "${kit_bindir}" "${kit81_bindir}" ${kit10_bindir}
@@ -81,7 +63,6 @@ add_executable(electrotheme
 
 embed_resource("client/dist/index.js" "src/js/bundle.hpp" "jsbundle")
 
-find_library(LIBUV_LIB libuv)
 find_library(USOCKETS_LIB usockets)
 
 MESSAGE(STATUS "LIBUV_LIB:${LIBUV_LIB}")
@@ -93,9 +74,10 @@ target_link_libraries(electrotheme PRIVATE
   CLI11::CLI11
   efsw::efsw
   ZLIB::ZLIB
-  ${LIBUV_LIB} ${USOCKETS_LIB}
+  $<IF:$<TARGET_EXISTS:uv_a>,uv_a,uv> ${USOCKETS_LIB}
   Shlwapi.lib wbemuuid.lib iphlpapi.lib Kernel32.lib Psapi.lib Userenv.lib)
 target_include_directories(electrotheme PRIVATE ${UWEBSOCKETS_INCLUDE_DIRS})
 
 set_property(TARGET electrotheme PROPERTY 
+  CXX_STANDARD 23
   MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
